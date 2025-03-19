@@ -1,0 +1,71 @@
+
+challenge_points.txt
+
+# Compiled files
+*.class
+*.com
+*.dll
+*.exe
+*.o
+*.so
+
+# Packages
+*.rar
+*.jar
+*.zip
+*.gz
+*.bzip
+*.xz
+*.lzma
+*.7z
+*~$*
+
+# Gradle
+.gradle
+build/
+!gradle-wrapper.jar
+
+# Maven
+target/
+
+# InelliJ IDEA files
+.idea/
+*.iml
+*.ipr
+*.ids
+*.iws
+!Project_Default.xml
+
+# Visual Studio Code
+.vscode/
+
+# Eclipse files
+.project
+.metadata
+.classpath
+.settings/
+.loadpath
+bin/
+
+# Netbeans
+nbactions.xml
+
+# Logfiles
+*.log*
+
+# Databases
+*.sqlite
+
+# OS dependant files
+.DS_Store
+.Spotlight-V100
+.Trashes
+Thumbs.db
+Desktop.ini
+*~
+# Thumbnails
+._*
+
+
+# Ignore Gradle build output directory
+build
