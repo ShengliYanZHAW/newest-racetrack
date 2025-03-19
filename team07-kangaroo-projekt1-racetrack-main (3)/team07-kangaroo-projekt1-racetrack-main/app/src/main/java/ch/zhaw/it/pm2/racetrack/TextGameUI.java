@@ -77,6 +77,58 @@ public class TextGameUI {
     }
 
     /**
+     * Configures the text terminal for proper track display.
+     * This ensures consistent character width and proper display of the track.
+     */
+    private void configureTerminalForTrackDisplay() {
+        // If using the Swing-based terminal from Text-IO, we can set a monospaced font
+        if (terminal.getClass().getSimpleName().contains("Swing")) {
+            try {
+                // Use reflection to access and configure the terminal's swing component
+                java.lang.reflect.Method getTextPane = terminal.getClass().getMethod("getTextPane");
+                Object textPane = getTextPane.invoke(terminal);
+                
+                // Set a monospaced font with consistent character width
+                java.awt.Font monoFont = new java.awt.Font(java.awt.Font.MONOSPACED, java.awt.Font.PLAIN, 14);
+                java.lang.reflect.Method setFont = textPane.getClass().getMethod("setFont", java.awt.Font.class);
+                setFont.invoke(textPane, monoFont);
+            } catch (Exception e) {
+                // Silently ignore if reflection fails - this is just an enhancement
+            }
+        }
+    }
+
+    /**
+     * Displays the current state of the track with proper formatting.
+     * Ensures consistent character width for track elements by replacing
+     * spaces with non-breaking spaces just for display purposes.
+     * 
+     * @param headerText optional text to display before the track (can be null)
+     */
+    private void displayTrack(String headerText) {
+        configureTerminalForTrackDisplay();
+        
+        // Get the track display string
+        String trackDisplay = track.toString();
+        
+        // Replace regular spaces with non-breaking spaces for display only
+        // This doesn't affect the underlying track representation
+        trackDisplay = trackDisplay.replace(' ', '\u00A0');
+        
+        if (headerText != null) {
+            terminal.println(headerText);
+        }
+        terminal.println(trackDisplay);
+    }
+
+    /**
+     * Displays the current state of the track with default header text.
+     */
+    private void displayTrack() {
+        displayTrack("\nCurrent game state:");
+    }
+
+    /**
      * Sets up the game by selecting a track file and configuring car strategies.
      * 
      * @throws IOException if there is an error reading track files
@@ -93,8 +145,9 @@ public class TextGameUI {
             terminal.println("\nTrack loaded successfully. Track dimensions: " + 
                              track.getWidth() + "x" + track.getHeight() + " cells");
             terminal.println("Number of cars: " + track.getCarCount());
-            terminal.println("\nCurrent track layout:");
-            terminal.println(track.toString());
+            
+            // Display the track with enhanced formatting
+            displayTrack("\nCurrent track layout:");
             
             setupCarStrategies();
             
@@ -242,7 +295,6 @@ public class TextGameUI {
         return new PathFollowerStrategy(selectedFile, car);
     }
 
-
     /**
      * Runs the main game loop until a winner is determined.
      */
@@ -252,8 +304,9 @@ public class TextGameUI {
         while (game.getWinner() == Game.NO_WINNER) {
             turnCount++;
             terminal.println("\n======== TURN " + turnCount + " ========");
-            terminal.println("Current game state:");
-            terminal.println(track.toString());
+            
+            // Use the enhanced display method
+            displayTrack();
             
             int currentCarIndex = game.getCurrentCarIndex();
             char currentCarId = game.getCarId(currentCarIndex);
@@ -299,7 +352,8 @@ public class TextGameUI {
         
         terminal.println("\n🏁 GAME OVER 🏁");
         terminal.println("Car '" + winnerId + "' has won the race!");
-        terminal.println("\nFinal game state:");
-        terminal.println(track.toString());
+        
+        // Use the enhanced display method for the final state
+        displayTrack("\nFinal game state:");
     }
 }

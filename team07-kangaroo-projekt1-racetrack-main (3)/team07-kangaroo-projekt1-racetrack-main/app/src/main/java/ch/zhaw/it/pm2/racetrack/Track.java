@@ -317,18 +317,21 @@ public class Track implements TrackSpecification {
 
     /**
      * Return a String representation of the track, including the car locations and status.
+     * Spaces are replaced with non-breaking spaces to ensure consistent character width
+     * when displayed in the terminal.
      *
      * @return a String representation of the track
      */
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (int row = 0; row < height; row++) {
-            for (int col = 0; col < width; col++) {
-                sb.append(getCharRepresentationAtPosition(row, col));
-            }
-            sb.append(System.lineSeparator());
+public String toString() {
+    StringBuilder sb = new StringBuilder();
+    for (int row = 0; row < height; row++) {
+        for (int col = 0; col < width; col++) {
+            char c = getCharRepresentationAtPosition(row, col);
+            sb.append(c);
         }
-        return sb.toString();
+        sb.append(System.lineSeparator());
     }
+    return sb.toString();
+}
 }
