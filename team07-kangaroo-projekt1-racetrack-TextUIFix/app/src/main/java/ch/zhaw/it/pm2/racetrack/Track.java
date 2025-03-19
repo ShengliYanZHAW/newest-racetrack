@@ -80,6 +80,7 @@ public class Track implements TrackSpecification {
      * @throws IOException if the track file can not be opened or reading fails
      * @throws InvalidFileFormatException if the track file contains invalid data
      *         (no track lines, inconsistent length, no cars)
+     * @throws IllegalArgumentException if trackFile is null
      */
     public Track(File trackFile) throws IOException, InvalidFileFormatException {
         if (trackFile == null) {
@@ -139,14 +140,21 @@ public class Track implements TrackSpecification {
     private void validateTrackLines(List<String> lines) throws InvalidFileFormatException {
         if (lines.isEmpty()) {
             // No valid lines => invalid format
-            throw new InvalidFileFormatException();
+            throw new InvalidFileFormatException(
+                InvalidFileFormatException.FormatErrorType.EMPTY_FILE,
+                "Track file contains no valid track data"
+            );
         }
 
         int firstLineLength = lines.get(0).length();
         // Verify consistent line length
-        for (String line : lines) {
+        for (int i = 1; i < lines.size(); i++) {
+            String line = lines.get(i);
             if (line.length() != firstLineLength) {
-                throw new InvalidFileFormatException();
+                throw new InvalidFileFormatException(
+                    InvalidFileFormatException.FormatErrorType.INCONSISTENT_LINE_LENGTH,
+                    "Line " + (i + 1) + " has length " + line.length() + ", expected " + firstLineLength
+                );
             }
         }
     }
@@ -158,16 +166,25 @@ public class Track implements TrackSpecification {
      */
     private void validateCars() throws InvalidFileFormatException {
         if (cars.isEmpty()) {
-            throw new InvalidFileFormatException();
+            throw new InvalidFileFormatException(
+                InvalidFileFormatException.FormatErrorType.NO_CARS,
+                "No cars found in track file"
+            );
         }
         if (cars.size() > MAX_CARS) {
-            throw new InvalidFileFormatException();
+            throw new InvalidFileFormatException(
+                InvalidFileFormatException.FormatErrorType.TOO_MANY_CARS,
+                "Too many cars in track file: " + cars.size() + ", maximum allowed: " + MAX_CARS
+            );
         }
     }
 
     /**
      * Parse each character from the lines into the board array.
      * If we find a car (char not matching SpaceType chars), create a Car.
+     *
+     * @param lines List of non-empty lines read from the file
+     * @throws InvalidFileFormatException if a duplicate car ID is found
      */
     private void parseTrack(List<String> lines) throws InvalidFileFormatException {
         for (int row = 0; row < height; row++) {
@@ -188,7 +205,10 @@ public class Track implements TrackSpecification {
 
                     // Check for ID duplicates
                     if (cars.stream().anyMatch(car -> car.getId() == c)) {
-                        throw new InvalidFileFormatException();
+                        throw new InvalidFileFormatException(
+                            InvalidFileFormatException.FormatErrorType.DUPLICATE_CAR_ID,
+                            "Duplicate car ID found: '" + c + "'"
+                        );
                     }
                     cars.add(newCar);
                 }
@@ -199,6 +219,9 @@ public class Track implements TrackSpecification {
     /**
      * Returns the SpaceType if the character c maps to a known track type,
      * or null if c is not a recognized SpaceType character (meaning it's a car).
+     *
+     * @param c character to detect
+     * @return the detected SpaceType or null if not a recognized space character
      */
     private SpaceType detectSpaceType(char c) {
         return SpaceType.ofChar(c).orElse(null);
@@ -238,6 +261,7 @@ public class Track implements TrackSpecification {
      *
      * @param carIndex the zero-based carIndex number
      * @return the car instance at the given index
+     * @throws IndexOutOfBoundsException if carIndex is negative or >= carCount
      */
     @Override
     public Car getCar(int carIndex) {

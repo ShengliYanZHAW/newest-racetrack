@@ -17,10 +17,19 @@ import java.util.List;
  * for user input and output.
  */
 public class TextGameUI {
+    /** The TextIO instance for handling all text I/O operations. */
     private final TextIO textIO;
+    
+    /** The text terminal for output display. */
     private final TextTerminal<?> terminal;
+    
+    /** The configuration for the game. */
     private final Config config;
+    
+    /** The game controller. */
     private Game game;
+    
+    /** The track used for the game. */
     private Track track;
 
     /**
@@ -39,11 +48,21 @@ public class TextGameUI {
      */
     public void start() {
         terminal.println("Welcome to Racetrack!");
-        setupGame();
-        runGameLoop();
+        terminal.println("======================");
+        
+        try {
+            setupGame();
+            runGameLoop();
+        } catch (Exception e) {
+            terminal.println("Error during game execution: " + e.getMessage());
+            if (e.getCause() != null) {
+                terminal.println("Caused by: " + e.getCause().getMessage());
+            }
+        }
+        
         textIO.newStringInputReader()
             .withMinLength(0)
-            .read("Press Enter to exit");
+            .read("\nPress Enter to exit");
         textIO.dispose("Thank you for playing Racetrack!");
     }
 
@@ -59,16 +78,32 @@ public class TextGameUI {
 
     /**
      * Sets up the game by selecting a track file and configuring car strategies.
+     * 
+     * @throws IOException if there is an error reading track files
+     * @throws InvalidFileFormatException if the track file format is invalid
      */
-    private void setupGame() {
+    private void setupGame() throws IOException, InvalidFileFormatException {
+        File trackFile = selectTrackFile();
+        
         try {
-            File trackFile = selectTrackFile();
+            terminal.println("\nLoading track from file: " + trackFile.getName());
             track = new Track(trackFile);
             game = new Game(track);
+            
+            terminal.println("\nTrack loaded successfully. Track dimensions: " + 
+                             track.getWidth() + "x" + track.getHeight() + " cells");
+            terminal.println("Number of cars: " + track.getCarCount());
+            terminal.println("\nCurrent track layout:");
+            terminal.println(track.toString());
+            
             setupCarStrategies();
-        } catch (IOException | InvalidFileFormatException e) {
-            terminal.println("Error setting up the game: " + e.getMessage());
-            System.exit(1);
+            
+            terminal.println("\nGame setup completed. Press Enter to start the game...");
+            textIO.newStringInputReader().withMinLength(0).read("");
+            
+        } catch (InvalidFileFormatException e) {
+            terminal.println("\nError loading track file: " + e.getMessage());
+            throw e;
         }
     }
 
@@ -76,42 +111,60 @@ public class TextGameUI {
      * Prompts the user to select a track file from the available options.
      *
      * @return the selected track file
+     * @throws IOException if there is an error accessing the track directory
      */
-    private File selectTrackFile() {
-        terminal.println("Please select a track file:");
+    private File selectTrackFile() throws IOException {
+        terminal.println("\nPlease select a track file:");
         File[] trackFiles = config.getTrackDirectory().listFiles((dir, name) -> name.endsWith(".txt"));
+        
         if (trackFiles == null || trackFiles.length == 0) {
             terminal.println("No track files found in " + config.getTrackDirectory().getAbsolutePath());
-            System.exit(1);
+            throw new IOException("No track files found in directory: " + config.getTrackDirectory().getAbsolutePath());
         }
+        
+        // Sort files alphabetically for a better user experience
+        Arrays.sort(trackFiles, (f1, f2) -> f1.getName().compareToIgnoreCase(f2.getName()));
+        
         List<String> trackNames = Arrays.stream(trackFiles)
             .map(File::getName)
             .toList();
+        
         String selectedTrackName = textIO.newStringInputReader()
             .withNumberedPossibleValues(trackNames)
             .read("Select a track");
+        
         return new File(config.getTrackDirectory(), selectedTrackName);
     }
 
     /**
      * Configures the move strategy for each car by prompting the user.
+     * 
+     * @throws InvalidFileFormatException if there is an error with move list or waypoint files
      */
-    private void setupCarStrategies() {
+    private void setupCarStrategies() throws InvalidFileFormatException {
         terminal.println("\nNow, choose a strategy for each car:");
+        
         for (int i = 0; i < game.getCarCount(); i++) {
             char carId = game.getCarId(i);
-            terminal.println("Car '" + carId + "' at position " + game.getCarPosition(i));
+            PositionVector carPos = game.getCarPosition(i);
+            
+            terminal.println("\n------ Car '" + carId + "' ------");
+            terminal.println("Starting position: " + carPos);
+            
             List<MoveStrategy.StrategyType> availableStrategies = Arrays.asList(
                 MoveStrategy.StrategyType.DO_NOT_MOVE,
                 MoveStrategy.StrategyType.USER,
                 MoveStrategy.StrategyType.MOVE_LIST,
                 MoveStrategy.StrategyType.PATH_FOLLOWER
             );
+            
             MoveStrategy.StrategyType selectedStrategy = textIO.newEnumInputReader(MoveStrategy.StrategyType.class)
                 .withNumberedPossibleValues(availableStrategies)
                 .read("Choose a strategy for Car '" + carId + "'");
             MoveStrategy strategy = createStrategy(selectedStrategy, i);
             game.setCarMoveStrategy(i, strategy);
+            
+            terminal.println("Strategy set: " + selectedStrategy);
         }
     }
 
@@ -119,9 +172,11 @@ public class TextGameUI {
      * Creates a move strategy based on the selected strategy type.
      *
      * @param strategyType the selected strategy type
+     * @param carIndex the index of the car for which the strategy is being created
      * @return the corresponding MoveStrategy instance
+     * @throws InvalidFileFormatException if there is an error with move list files
      */
-    private MoveStrategy createStrategy(MoveStrategy.StrategyType strategyType, int carIndex) {
+    private MoveStrategy createStrategy(MoveStrategy.StrategyType strategyType, int carIndex) throws InvalidFileFormatException {
         return switch (strategyType) {
             case DO_NOT_MOVE -> new DoNotMoveStrategy();
             case USER -> new UserMoveStrategy();
@@ -134,21 +189,30 @@ public class TextGameUI {
     /**
      * Creates a MoveListStrategy by prompting the user to select a move file.
      *
-     * @return the MoveListStrategy instance, or a DoNotMoveStrategy if no file is found
+     * @return the MoveListStrategy instance
+     * @throws InvalidFileFormatException if there is an error with the move list file format
      */
-    private MoveStrategy createMoveListStrategy() {
+    private MoveStrategy createMoveListStrategy() throws InvalidFileFormatException {
         terminal.println("Select a move file for the MOVE_LIST strategy:");
         File[] moveFiles = config.getMoveDirectory().listFiles((dir, name) -> name.endsWith(".txt"));
+        
         if (moveFiles == null || moveFiles.length == 0) {
             terminal.println("No move files found in " + config.getMoveDirectory().getAbsolutePath());
+            terminal.println("Defaulting to DO_NOT_MOVE strategy.");
             return new DoNotMoveStrategy();
         }
+        
+        // Sort files alphabetically
+        Arrays.sort(moveFiles, (f1, f2) -> f1.getName().compareToIgnoreCase(f2.getName()));
+        
         List<String> moveFileNames = Arrays.stream(moveFiles)
             .map(File::getName)
             .toList();
+        
         String selectedFileName = textIO.newStringInputReader()
             .withNumberedPossibleValues(moveFileNames)
             .read("Select a move file");
+        
         File moveFile = new File(config.getMoveDirectory(), selectedFileName);
         return new MoveListStrategy(moveFile);
     }
@@ -183,22 +247,46 @@ public class TextGameUI {
      * Runs the main game loop until a winner is determined.
      */
     private void runGameLoop() {
+        int turnCount = 0;
+        
         while (game.getWinner() == Game.NO_WINNER) {
-            terminal.println("\nCurrent game state:");
+            turnCount++;
+            terminal.println("\n======== TURN " + turnCount + " ========");
+            terminal.println("Current game state:");
             terminal.println(track.toString());
+            
             int currentCarIndex = game.getCurrentCarIndex();
             char currentCarId = game.getCarId(currentCarIndex);
-            terminal.println("Car '" + currentCarId + "' turn. Position: " +
-                game.getCarPosition(currentCarIndex) + ", Velocity: " +
-                game.getCarVelocity(currentCarIndex));
+            PositionVector position = game.getCarPosition(currentCarIndex);
+            PositionVector velocity = game.getCarVelocity(currentCarIndex);
+            
+            terminal.println("\nCar '" + currentCarId + "' turn");
+            terminal.println("Position: " + position);
+            terminal.println("Velocity: " + velocity);
+            
             Direction nextMove = game.nextCarMove(currentCarIndex);
             terminal.println("Car '" + currentCarId + "' will accelerate: " + nextMove);
+            
             game.doCarTurn(nextMove);
+            
+            // Show new position and velocity after the move
+            if (!track.getCar(currentCarIndex).isCrashed()) {
+                terminal.println("New position: " + game.getCarPosition(currentCarIndex));
+                terminal.println("New velocity: " + game.getCarVelocity(currentCarIndex));
+            } else {
+                terminal.println("Car '" + currentCarId + "' has crashed!");
+            }
+            
             if (game.getWinner() != Game.NO_WINNER) {
                 announceWinner();
                 break;
             }
+            
             game.switchToNextActiveCar();
+            
+            // Pause briefly between turns for readability
+            terminal.println("\nPress Enter for next turn...");
+            textIO.newStringInputReader().withMinLength(0).read("");
         }
     }
 
@@ -208,6 +296,7 @@ public class TextGameUI {
     private void announceWinner() {
         int winnerIndex = game.getWinner();
         char winnerId = game.getCarId(winnerIndex);
+        
         terminal.println("\n🏁 GAME OVER 🏁");
         terminal.println("Car '" + winnerId + "' has won the race!");
         terminal.println("\nFinal game state:");
