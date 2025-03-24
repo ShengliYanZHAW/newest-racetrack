@@ -29,19 +29,7 @@ public class UserMoveStrategy implements MoveStrategy {
      */
     @Override
     public Direction nextMove() {
-        displayDirectionHelp();
-
         return textIO.newEnumInputReader(Direction.class)
                 .read("Choose a direction to accelerate");
-    }
-
-    /**
-     * Displays a visual help for direction selection.
-     */
-    private void displayDirectionHelp() {
-        terminal.println("Direction options:");
-        terminal.println("UP_LEFT   UP   UP_RIGHT");
-        terminal.println("LEFT     NONE     RIGHT");
-        terminal.println("DOWN_LEFT DOWN DOWN_RIGHT");
     }
 }
