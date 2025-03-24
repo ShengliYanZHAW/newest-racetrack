@@ -25,6 +25,8 @@ public class Car implements CarSpecification {
     /** Crash state of the car; true if crashed. */
     private boolean crashed;
 
+    private int moveCount = 0;
+
     /**
      * Constructor for class Car.
      * @param id unique Car identification
@@ -91,10 +93,21 @@ public class Car implements CarSpecification {
 
     /**
      * Update this Car's position based on its current velocity.
+     * And increment the move count.
      */
     @Override
     public void move() {
         this.position = this.position.add(this.velocity);
+        moveCount++;
+    }
+
+    /**
+     * Returns the total number of moves executed by this car.
+     *
+     * @return the move count
+     */
+    public int getMoveCount() {
+        return moveCount;
     }
 
     /**

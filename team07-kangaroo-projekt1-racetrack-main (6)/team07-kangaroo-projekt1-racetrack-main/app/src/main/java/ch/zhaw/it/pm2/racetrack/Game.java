@@ -18,7 +18,7 @@ public class Game implements GameSpecification {
     private final List<MoveStrategy> moveStrategies;
     private int currentCarIndex;
     private int winner;
-    
+
     // Track if a car has crossed a finish line incorrectly
     private boolean[] hasIncorrectCrossing;
     // Track how many consecutive correct crossings a car has made
@@ -37,7 +37,7 @@ public class Game implements GameSpecification {
         }
         this.currentCarIndex = 0;
         this.winner = NO_WINNER;
-        
+
         // Initialize tracking arrays for finish line crossing logic
         this.hasIncorrectCrossing = new boolean[carCount];
         this.consecutiveCorrectCrossings = new int[carCount];
@@ -212,23 +212,24 @@ public class Game implements GameSpecification {
         checkForWinner();
     }
 
-    /**
-     * Switches to the next car who is still in the game. Skips crashed cars.
-     * If no active cars are found, the currentCarIndex remains unchanged.
-     */
-    @Override
-    public void switchToNextActiveCar() {
-        int carCount = track.getCarCount();
-        if (carCount == 0) return;
+/**
+ * Switches to the next car who is still in the game. Skips crashed cars.
+ * If no active cars are found, the currentCarIndex remains unchanged.
+ */
+@Override
+public void switchToNextActiveCar() {
+    int carCount = track.getCarCount();
+    if (carCount == 0) return;
 
-        for (int i = 1; i <= carCount; i++) {
-            int index = (currentCarIndex + i) % carCount;
-            if (!track.getCar(index).isCrashed()) {
-                currentCarIndex = index;
-                return;
-            }
+    for (int i = 1; i <= carCount; i++) {
+        int index = (currentCarIndex + i) % carCount;
+        if (!track.getCar(index).isCrashed()) {
+            currentCarIndex = index;
+            return;
         }
     }
+
+}
 
     /**
      * Returns all the grid positions in the path between two positions, for use in determining line of sight. <br>

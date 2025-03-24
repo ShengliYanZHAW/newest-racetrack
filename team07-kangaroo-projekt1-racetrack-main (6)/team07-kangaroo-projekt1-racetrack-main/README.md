@@ -9,8 +9,8 @@ To ensure organization and efficiency in the development of our project, we adop
 - **Management**: Direct commits to `main` are not allowed. All changes must be introduced via pull requests from dedicated feature branches.
 
 ### Feature Branches
-- **Creation**: Each new feature should be developed in a specific branch, created from the `main` branch. The name of the feature branch should correspond to the issue ID on GitHub to facilitate tracking, for example, `feature_#123`.
-- **Usage**: These branches are dedicated to the development of individual features or fixes, directly linked to open issues on GitHub.
+- **Creation**: Each new feature should be developed in a specific branch, created from the `main` branch. 
+- **Usage**: These branches are dedicated to the development of individual features or fixes. We do not enforce a strict naming convention for feature branches.
 - **Pull Request (PR)**: Once the feature is completed, a PR is created towards the `main` branch. The PR should be linked to the reference issue to facilitate review of the work done.
 - **Review**: Every PR requires a review by at least one other team member before merging. This ensures that the code is scrutinized, keeping the quality and consistency of the project high.
 
@@ -21,10 +21,11 @@ To ensure organization and efficiency in the development of our project, we adop
 By incorporating this branching strategy, we aim to optimize the development process and continuously improve the quality of our software.
 
 ---
+## Equivalence classes
 
-## GameTest
+### GameTest
 
-### 1. getCarCount()
+#### getCarCount()
 
 | Precondition                   | Input                      | Expected                     | Comments                                                         |
 |--------------------------------|----------------------------|------------------------------|------------------------------------------------------------------|
@@ -32,7 +33,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### 2. getCurrentCarIndex()
+#### getCurrentCarIndex()
 
 | Precondition                   | Input                      | Expected                     | Comments                                                         |
 |--------------------------------|----------------------------|------------------------------|------------------------------------------------------------------|
@@ -42,7 +43,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### 3. getCarId(int carIndex)
+#### getCarId(int carIndex)
 
 | Precondition                   | Input                      | Expected                     | Comments                                                         |
 |--------------------------------|----------------------------|------------------------------|------------------------------------------------------------------|
@@ -53,7 +54,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### 4. getCarPosition(int carIndex) and getCarVelocity(int carIndex)
+#### getCarPosition(int carIndex) and getCarVelocity(int carIndex)
 
 | Precondition                   | Input (carIndex)           | Expected                     | Comments                                                         |
 |--------------------------------|----------------------------|------------------------------|------------------------------------------------------------------|
@@ -63,7 +64,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### 5. setCarMoveStrategy(int carIndex, MoveStrategy moveStrategy)
+#### setCarMoveStrategy(int carIndex, MoveStrategy moveStrategy)
 
 | Precondition                   | Input                      | Expected                     | Comments                                                         |
 |--------------------------------|----------------------------|------------------------------|------------------------------------------------------------------|
@@ -74,7 +75,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### 6. nextCarMove(int carIndex)
+#### nextCarMove(int carIndex)
 
 | Precondition                   | Input                      | Expected                     | Comments                                                         |
 |--------------------------------|----------------------------|------------------------------|------------------------------------------------------------------|
@@ -85,7 +86,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### 7. getWinner()
+#### getWinner()
 
 | Precondition                   | Input                      | Expected                     | Comments                                                         |
 |--------------------------------|----------------------------|------------------------------|------------------------------------------------------------------|
@@ -96,7 +97,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### 8. doCarTurn(Direction acceleration)
+#### doCarTurn(Direction acceleration)
 
 | Precondition                   | Input                      | Expected                     | Comments                                                         |
 |--------------------------------|----------------------------|------------------------------|------------------------------------------------------------------|
@@ -108,7 +109,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### 9. switchToNextActiveCar()
+#### switchToNextActiveCar()
 
 | Precondition                   | Input                      | Expected                     | Comments                                                         |
 |--------------------------------|----------------------------|------------------------------|------------------------------------------------------------------|
@@ -118,7 +119,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### 10. calculatePath(PositionVector startPosition, PositionVector endPosition)
+#### calculatePath(PositionVector startPosition, PositionVector endPosition)
 
 | Precondition                   | Input (startPosition, endPosition)            | Expected                     | Comments                                                         |
 |--------------------------------|-----------------------------------------------|------------------------------|------------------------------------------------------------------|
@@ -131,9 +132,9 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-## CarTest
+### CarTest
 
-### Method: getId()
+#### getId()
 
 | Precondition                          | Input        | Expected         | Comments                                             |
 |---------------------------------------|--------------|------------------|------------------------------------------------------|
@@ -141,7 +142,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### Method: getPosition()
+#### getPosition()
 
 | Precondition                                       | Input  | Expected                                 | Comments                                                        |
 |----------------------------------------------------|--------|------------------------------------------|-----------------------------------------------------------------|
@@ -150,7 +151,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### Method: getVelocity()
+#### getVelocity()
 
 | Precondition                                     | Input  | Expected                                     | Comments                                                          |
 |--------------------------------------------------|--------|----------------------------------------------|-------------------------------------------------------------------|
@@ -159,7 +160,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### Method: nextPosition()
+#### nextPosition()
 
 | Precondition                                              | Input  | Expected                                       | Comments                                                            |
 |-----------------------------------------------------------|--------|------------------------------------------------|---------------------------------------------------------------------|
@@ -169,7 +170,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### Method: accelerate(Direction acceleration)
+#### accelerate(Direction acceleration)
 
 | Precondition                                            | Input                                                   | Expected                                    | Comments                                                                       |
 |---------------------------------------------------------|---------------------------------------------------------|---------------------------------------------|--------------------------------------------------------------------------------|
@@ -180,7 +181,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### Method: move()
+#### move()
 
 | Precondition                                               | Input  | Expected                                           | Comments                                                       |
 |------------------------------------------------------------|--------|----------------------------------------------------|----------------------------------------------------------------|
@@ -189,7 +190,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### Method: crash(PositionVector crashPosition)
+#### crash(PositionVector crashPosition)
 
 | Precondition                                               | Input                                               | Expected                                              | Comments                                                                               |
 |------------------------------------------------------------|-----------------------------------------------------|-------------------------------------------------------|----------------------------------------------------------------------------------------|
@@ -198,7 +199,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### Method: isCrashed()
+#### isCrashed()
 
 | Precondition                          | Input         | Expected            | Comments                                                        |
 |---------------------------------------|---------------|---------------------|-----------------------------------------------------------------|
@@ -207,9 +208,9 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-## TrackTest
+### TrackTest
 
-### Constructor Track(File trackFile)
+#### Constructor Track(File trackFile)
 
 | Precondition                           | Input (Range/Values)                                          | Expected                                | Comments                                                                                           |
 |----------------------------------------|---------------------------------------------------------------|-----------------------------------------|----------------------------------------------------------------------------------------------------|
@@ -222,7 +223,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### getHeight()
+#### getHeight()
 
 | Precondition                         | Input                           | Expected                  | Comments                                                       |
 |--------------------------------------|---------------------------------|---------------------------|----------------------------------------------------------------|
@@ -231,7 +232,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### getWidth()
+#### getWidth()
 
 | Precondition                         | Input                           | Expected                  | Comments                                                       |
 |--------------------------------------|---------------------------------|---------------------------|----------------------------------------------------------------|
@@ -240,7 +241,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### getCarCount()
+#### getCarCount()
 
 | Precondition                         | Input                           | Expected                  | Comments                                                                                   |
 |--------------------------------------|---------------------------------|---------------------------|--------------------------------------------------------------------------------------------|
@@ -252,7 +253,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### getCar(int carIndex)
+#### getCar(int carIndex)
 
 | Precondition                         | Input (carIndex)                                    | Expected                                | Comments                                                     |
 |--------------------------------------|-----------------------------------------------------|-----------------------------------------|--------------------------------------------------------------|
@@ -263,7 +264,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### getSpaceTypeAtPosition(PositionVector position)
+#### getSpaceTypeAtPosition(PositionVector position)
 
 | Precondition                         | Input (PositionVector)                              | Expected                                | Comments                                                                       |
 |--------------------------------------|-----------------------------------------------------|-----------------------------------------|--------------------------------------------------------------------------------|
@@ -275,7 +276,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### getCharRepresentationAtPosition(int row, int col)
+#### getCharRepresentationAtPosition(int row, int col)
 
 | Precondition                         | Input (row, col)                                     | Expected                                | Comments                                                                         |
 |--------------------------------------|------------------------------------------------------|-----------------------------------------|----------------------------------------------------------------------------------|
@@ -287,7 +288,7 @@ By incorporating this branching strategy, we aim to optimize the development pro
 
 ---
 
-### toString()
+#### toString()
 
 | Precondition                         | Input                           | Expected                                | Comments                                                                  |
 |--------------------------------------|---------------------------------|-----------------------------------------|---------------------------------------------------------------------------|
