@@ -5,6 +5,7 @@ import ch.zhaw.it.pm2.racetrack.strategy.MoveStrategy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents the game controller which manages game state changes.
@@ -24,9 +25,10 @@ public class Game implements GameSpecification {
      * Constructs a new Game instance using the provided track.
      *
      * @param track the track to be used for this game
+     * @throws NullPointerException if track is null
      */
     public Game(final Track track) {
-        this.track = track;
+        this.track = Objects.requireNonNull(track, "Track must not be null");
         int carCount = track.getCarCount();
         this.moveStrategies = new ArrayList<>(carCount);
         for (int i = 0; i < carCount; i++) {
@@ -63,6 +65,7 @@ public class Game implements GameSpecification {
      *
      * @param carIndex the zero-based index of the car
      * @return the car ID as a character
+     * @throws IndexOutOfBoundsException if carIndex is invalid
      */
     @Override
     public char getCarId(int carIndex) {
@@ -74,6 +77,7 @@ public class Game implements GameSpecification {
      *
      * @param carIndex the zero-based index of the car
      * @return the PositionVector representing the car's position
+     * @throws IndexOutOfBoundsException if carIndex is invalid
      */
     @Override
     public PositionVector getCarPosition(int carIndex) {
@@ -85,6 +89,7 @@ public class Game implements GameSpecification {
      *
      * @param carIndex the zero-based index of the car
      * @return the PositionVector representing the car's velocity
+     * @throws IndexOutOfBoundsException if carIndex is invalid
      */
     @Override
     public PositionVector getCarVelocity(int carIndex) {
@@ -96,9 +101,13 @@ public class Game implements GameSpecification {
      *
      * @param carIndex     the zero-based index of the car
      * @param moveStrategy the MoveStrategy to be associated with the car
+     * @throws IndexOutOfBoundsException if carIndex is invalid
      */
     @Override
     public void setCarMoveStrategy(int carIndex, MoveStrategy moveStrategy) {
+        if (carIndex < 0 || carIndex >= getCarCount()) {
+            throw new IndexOutOfBoundsException("Invalid car index: " + carIndex);
+        }
         moveStrategies.set(carIndex, moveStrategy);
     }
 
@@ -108,9 +117,14 @@ public class Game implements GameSpecification {
      * @param carIndex the zero-based index of the car
      * @return the Direction representing the next move
      * @throws IllegalStateException if the MoveStrategy for the car is not set
+     * @throws IndexOutOfBoundsException if carIndex is invalid
      */
     @Override
     public Direction nextCarMove(int carIndex) {
+        if (carIndex < 0 || carIndex >= getCarCount()) {
+            throw new IndexOutOfBoundsException("Invalid car index: " + carIndex);
+        }
+        
         MoveStrategy strategy = moveStrategies.get(carIndex);
         if (strategy == null) {
             throw new IllegalStateException("MoveStrategy for car " + carIndex + " is not set.");
@@ -136,9 +150,12 @@ public class Game implements GameSpecification {
      *
      * @param acceleration the Direction representing the acceleration for this turn;
      *                     its components must be -1, 0, or 1
+     * @throws IllegalArgumentException if acceleration is null
      */
     @Override
     public void doCarTurn(Direction acceleration) {
+        Objects.requireNonNull(acceleration, "Acceleration must not be null");
+        
         Car currentCar = track.getCar(currentCarIndex);
         if (isTurnInvalid(currentCar)) {
             return;
@@ -177,32 +194,11 @@ public class Game implements GameSpecification {
      * @param start the starting PositionVector
      * @param end   the ending PositionVector
      * @return a List of PositionVectors representing the path from start to end (inclusive)
+     * @throws NullPointerException if start or end is null
      */
     @Override
     public List<PositionVector> calculatePath(PositionVector start, PositionVector end) {
-        List<PositionVector> path = new ArrayList<>();
-        int x = start.getX();
-        int y = start.getY();
-        path.add(new PositionVector(x, y));
-
-        int diffX = end.getX() - x;
-        int diffY = end.getY() - y;
-        PathCalculationParameters params = calculatePathParameters(diffX, diffY);
-
-        int error = params.distanceFastAxis / 2;
-        for (int i = 0; i < params.distanceFastAxis; i++) {
-            error -= params.distanceSlowAxis;
-            if (error < 0) {
-                error += params.distanceFastAxis;
-                x += params.diagonalStepX;
-                y += params.diagonalStepY;
-            } else {
-                x += params.parallelStepX;
-                y += params.parallelStepY;
-            }
-            path.add(new PositionVector(x, y));
-        }
-        return path;
+        return PathCalculator.calculatePath(start, end);
     }
 
     /**
@@ -361,47 +357,5 @@ public class Game implements GameSpecification {
             }
         }
         return false;
-    }
-
-    /**
-     * Calculates the step parameters needed for Bresenham's algorithm.
-     *
-     * @param diffX the difference in x-coordinates
-     * @param diffY the difference in y-coordinates
-     * @return a PathCalculationParameters object containing the computed parameters
-     */
-    private PathCalculationParameters calculatePathParameters(int diffX, int diffY) {
-        int distX = Math.abs(diffX);
-        int distY = Math.abs(diffY);
-        int dirX = Integer.signum(diffX);
-        int dirY = Integer.signum(diffY);
-        if (distX > distY) {
-            return new PathCalculationParameters(dirX, 0, dirX, dirY, distY, distX);
-        } else {
-            return new PathCalculationParameters(0, dirY, dirX, dirY, distX, distY);
-        }
-    }
-
-    /**
-     * Holds step parameters for path calculation using Bresenham's algorithm.
-     */
-    private static class PathCalculationParameters {
-        final int parallelStepX;
-        final int parallelStepY;
-        final int diagonalStepX;
-        final int diagonalStepY;
-        final int distanceSlowAxis;
-        final int distanceFastAxis;
-
-        PathCalculationParameters(int parallelStepX, int parallelStepY,
-                                  int diagonalStepX, int diagonalStepY,
-                                  int distanceSlowAxis, int distanceFastAxis) {
-            this.parallelStepX = parallelStepX;
-            this.parallelStepY = parallelStepY;
-            this.diagonalStepX = diagonalStepX;
-            this.diagonalStepY = diagonalStepY;
-            this.distanceSlowAxis = distanceSlowAxis;
-            this.distanceFastAxis = distanceFastAxis;
-        }
     }
 }
