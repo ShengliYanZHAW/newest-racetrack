@@ -7,10 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Game controller class, performing all actions to modify the game state.
- * It contains the logic to switch and move the cars, detect if they are crashed
- * and if we have a winner.
- * It also acts as a facade to track and car information, to get game state information.
+ * Represents the game controller which manages game state changes.
+ * It handles car movements, collision detection, finish line crossing logic,
+ * and provides a facade to access track and car information.
  */
 public class Game implements GameSpecification {
 
@@ -18,14 +17,12 @@ public class Game implements GameSpecification {
     private final List<MoveStrategy> moveStrategies;
     private int currentCarIndex;
     private int winner;
-
-    // Track if a car has crossed a finish line incorrectly
-    private boolean[] hasIncorrectCrossing;
-    // Track how many consecutive correct crossings a car has made
-    private int[] consecutiveCorrectCrossings;
+    private final boolean[] hasIncorrectCrossing;
+    private final int[] consecutiveCorrectCrossings;
 
     /**
-     * Constructor for the Game class.
+     * Constructs a new Game instance using the provided track.
+     *
      * @param track the track to be used for this game
      */
     public Game(final Track track) {
@@ -37,15 +34,14 @@ public class Game implements GameSpecification {
         }
         this.currentCarIndex = 0;
         this.winner = NO_WINNER;
-
-        // Initialize tracking arrays for finish line crossing logic
         this.hasIncorrectCrossing = new boolean[carCount];
         this.consecutiveCorrectCrossings = new int[carCount];
     }
 
     /**
-     * Return the number of cars on the track.
-     * @return the number of cars
+     * Returns the number of cars on the track.
+     *
+     * @return the car count
      */
     @Override
     public int getCarCount() {
@@ -53,9 +49,9 @@ public class Game implements GameSpecification {
     }
 
     /**
-     * Return the index of the current active car.
-     * Car indexes are zero-based, so the first car is 0, and the last car is getCarCount() - 1.
-     * @return the zero-based number of the current car
+     * Returns the index of the current active car.
+     *
+     * @return the zero-based index of the current car
      */
     @Override
     public int getCurrentCarIndex() {
@@ -63,9 +59,10 @@ public class Game implements GameSpecification {
     }
 
     /**
-     * Get the id of the specified car.
-     * @param carIndex The zero-based carIndex number
-     * @return a char containing the id of the car
+     * Returns the ID of the specified car.
+     *
+     * @param carIndex the zero-based index of the car
+     * @return the car ID as a character
      */
     @Override
     public char getCarId(int carIndex) {
@@ -73,9 +70,10 @@ public class Game implements GameSpecification {
     }
 
     /**
-     * Get the position of the specified car.
-     * @param carIndex The zero-based carIndex number
-     * @return a PositionVector containing the car's current position
+     * Returns the current position of the specified car.
+     *
+     * @param carIndex the zero-based index of the car
+     * @return the PositionVector representing the car's position
      */
     @Override
     public PositionVector getCarPosition(int carIndex) {
@@ -83,9 +81,10 @@ public class Game implements GameSpecification {
     }
 
     /**
-     * Get the velocity of the specified car.
-     * @param carIndex The zero-based carIndex number
-     * @return a PositionVector containing the car's current velocity
+     * Returns the current velocity of the specified car.
+     *
+     * @param carIndex the zero-based index of the car
+     * @return the PositionVector representing the car's velocity
      */
     @Override
     public PositionVector getCarVelocity(int carIndex) {
@@ -93,9 +92,10 @@ public class Game implements GameSpecification {
     }
 
     /**
-     * Set the {@link MoveStrategy} for the specified car.
-     * @param carIndex The zero-based carIndex number
-     * @param moveStrategy the {@link MoveStrategy} to be associated with the specified car
+     * Sets the MoveStrategy for the specified car.
+     *
+     * @param carIndex     the zero-based index of the car
+     * @param moveStrategy the MoveStrategy to be associated with the car
      */
     @Override
     public void setCarMoveStrategy(int carIndex, MoveStrategy moveStrategy) {
@@ -103,9 +103,11 @@ public class Game implements GameSpecification {
     }
 
     /**
-     * Get the next move for the specified car, depending on its {@link MoveStrategy}.
-     * @param carIndex The zero-based carIndex number
-     * @return the {@link Direction} containing the next move for the specified car
+     * Returns the next move for the specified car based on its MoveStrategy.
+     *
+     * @param carIndex the zero-based index of the car
+     * @return the Direction representing the next move
+     * @throws IllegalStateException if the MoveStrategy for the car is not set
      */
     @Override
     public Direction nextCarMove(int carIndex) {
@@ -117,10 +119,9 @@ public class Game implements GameSpecification {
     }
 
     /**
-     * Return the carIndex of the winner.<br/>
-     * If the game is still in progress, returns {@link #NO_WINNER}.
-     * @return the winning car's index (zero-based, see {@link #getCurrentCarIndex()}),
-     * or {@link #NO_WINNER} if the game is still in progress
+     * Returns the index of the winning car.
+     *
+     * @return the zero-based index of the winner, or NO_WINNER if the game is still in progress
      */
     @Override
     public int getWinner() {
@@ -128,171 +129,76 @@ public class Game implements GameSpecification {
     }
 
     /**
-     * Executes the next turn for the current active car.
+     * Executes the turn for the current active car using the provided acceleration.
+     * The method updates the car's velocity, computes the movement path using Bresenham's algorithm,
+     * and checks each position for collisions or finish line crossings.
+     * If a collision or winning condition is detected, the turn ends immediately.
      *
-     * This method updates the current car's velocity based on the provided acceleration,
-     * calculates the movement path, and verifies each position along the path for collisions or
-     * finish line crossings. It also handles the outcome of the turn, whether it is a crash,
-     * a valid finish, or simply a movement update.
-     *
-     * The method performs the following steps:
-     * 1. Accelerate the Car: Update the car's velocity using the provided acceleration vector.
-     * 2. Calculate the Path: Compute the path from the current position (start) to the new position (end)
-     *    using the calculatePath(PositionVector, PositionVector) method.
-     * 3. Path Verification: For each position in the calculated path, determine the type of space encountered:
-     *    - TRACK: Check for collision with another car. If a collision occurs, mark the car as crashed and stop further processing.
-     *    - WALL: The car has hit a wall. Mark the car as crashed and terminate further movement.
-     *    - FINISH_*: The car has crossed a finish line segment.
-     *      - If crossing in the correct direction, the car wins if it has either never crossed incorrectly before,
-     *        or if it has achieved 2 consecutive correct crossings.
-     *      - If crossing in the incorrect direction, record the incorrect crossing and reset the consecutive correct crossings counter.
-     * 4. If the car crashes or wins, update its position to the corresponding crash or win coordinates.
-     * 5. In case of a crash, check if only one car remains; if so, declare the remaining car as the winner.
-     * 6. If none of the above conditions are met, move the car to the computed end position.
-     *
-     * Note: The calling method must inspect the winner state and decide the next course of action.
-     * If the winner is not NO_WINNER, or if the current car is already marked as crashed,
-     * the method returns immediately without further processing.
-     *
-     * @param acceleration a Direction object representing the car's acceleration vector
-     *                     for this turn. The vector components are restricted to -1, 0, or 1 for both x and y directions.
+     * @param acceleration the Direction representing the acceleration for this turn;
+     *                     its components must be -1, 0, or 1
      */
-
     @Override
     public void doCarTurn(Direction acceleration) {
         Car currentCar = track.getCar(currentCarIndex);
-        if (winner != NO_WINNER || currentCar.isCrashed()) {
+        if (isTurnInvalid(currentCar)) {
             return;
         }
-
         currentCar.accelerate(acceleration);
-
-        PositionVector startPosition = currentCar.getPosition();
-        PositionVector endPosition = currentCar.nextPosition();
-        List<PositionVector> path = calculatePath(startPosition, endPosition);
-
-        for (PositionVector pos : path) {
-            SpaceType space = track.getSpaceTypeAtPosition(pos);
-            if (space == SpaceType.WALL) {
-                currentCar.crash(pos);
-                checkForWinner();
-                return;
-            }
-            if (space == SpaceType.TRACK && hasCollisionAt(pos, currentCarIndex)) {
-                currentCar.crash(pos);
-                checkForWinner();
-                return;
-            }
-            if (isFinish(space)) {
-                if (isWinningFinish(space, currentCar.getVelocity())) {
-                    // Correct direction crossing
-                    if (!hasIncorrectCrossing[currentCarIndex]) {
-                        // No incorrect crossings before, this is a win
-                        currentCar.move();
-                        winner = currentCarIndex;
-                        return;
-                    } else {
-                        // Had incorrect crossing before, need 2 consecutive correct crossings
-                        consecutiveCorrectCrossings[currentCarIndex]++;
-                        if (consecutiveCorrectCrossings[currentCarIndex] >= 2) {
-                            // Two consecutive correct crossings, this is a win
-                            currentCar.move();
-                            winner = currentCarIndex;
-                            return;
-                        }
-                    }
-                } else {
-                    // Incorrect direction crossing
-                    hasIncorrectCrossing[currentCarIndex] = true;
-                    consecutiveCorrectCrossings[currentCarIndex] = 0;
-                }
-            }
+        List<PositionVector> path = calculatePath(currentCar.getPosition(), currentCar.nextPosition());
+        if (processPath(currentCar, path)) {
+            return;
         }
         currentCar.move();
         checkForWinner();
     }
 
-/**
- * Switches to the next car who is still in the game. Skips crashed cars.
- * If no active cars are found, the currentCarIndex remains unchanged.
- */
-@Override
-public void switchToNextActiveCar() {
-    int carCount = track.getCarCount();
-    if (carCount == 0) return;
-
-    for (int i = 1; i <= carCount; i++) {
-        int index = (currentCarIndex + i) % carCount;
-        if (!track.getCar(index).isCrashed()) {
-            currentCarIndex = index;
+    /**
+     * Switches to the next active car that has not crashed.
+     * If no active car is found, the current car remains unchanged.
+     */
+    @Override
+    public void switchToNextActiveCar() {
+        int carCount = track.getCarCount();
+        if (carCount == 0) {
             return;
+        }
+        for (int i = 1; i <= carCount; i++) {
+            int index = (currentCarIndex + i) % carCount;
+            if (!track.getCar(index).isCrashed()) {
+                currentCarIndex = index;
+                return;
+            }
         }
     }
 
-}
-
     /**
-     * Returns all the grid positions in the path between two positions, for use in determining line of sight. <br>
-     * Determine the 'pixels/positions' on a raster/grid using Bresenham's line algorithm.
-     * (<a href="https://de.wikipedia.org/wiki/Bresenham-Algorithmus">Bresenham-Algorithmus</a>)<br>
-     * Basic steps are <ul>
-     *   <li>Detect which axis of the distance vector is longer (faster movement)</li>
-     *   <li>for each pixel on the 'faster' axis calculate the position on the 'slower' axis.</li>
-     * </ul>
-     * Direction of the movement has to correctly considered.
+     * Calculates the grid positions in the path between two positions using Bresenham's algorithm.
      *
-     * @param startPosition Starting position as a PositionVector
-     * @param endPosition Ending position as a PositionVector
-     * @return intervening grid positions as a List of PositionVector's, including the starting and ending positions.
+     * @param start the starting PositionVector
+     * @param end   the ending PositionVector
+     * @return a List of PositionVectors representing the path from start to end (inclusive)
      */
     @Override
-    public List<PositionVector> calculatePath(PositionVector startPosition, PositionVector endPosition) {
+    public List<PositionVector> calculatePath(PositionVector start, PositionVector end) {
         List<PositionVector> path = new ArrayList<>();
-
-        int startX = startPosition.getX();
-        int startY = startPosition.getY();
-        int endX = endPosition.getX();
-        int endY = endPosition.getY();
-
-        int diffX = endX - startX;
-        int diffY = endY - startY;
-        int distX = Math.abs(diffX);
-        int distY = Math.abs(diffY);
-        int dirX = Integer.signum(diffX);
-        int dirY = Integer.signum(diffY);
-
-        // Determine the fast axis and set step increments
-        int parallelStepX, parallelStepY, diagonalStepX, diagonalStepY, distanceSlowAxis, distanceFastAxis;
-
-        if (distX > distY) {
-            parallelStepX = dirX;
-            parallelStepY = 0;
-            diagonalStepX = dirX;
-            diagonalStepY = dirY;
-            distanceSlowAxis = distY;
-            distanceFastAxis = distX;
-        } else {
-            parallelStepX = 0;
-            parallelStepY = dirY;
-            diagonalStepX = dirX;
-            diagonalStepY = dirY;
-            distanceSlowAxis = distX;
-            distanceFastAxis = distY;
-        }
-
-        int x = startX, y = startY;
+        int x = start.getX();
+        int y = start.getY();
         path.add(new PositionVector(x, y));
 
-        int error = distanceFastAxis / 2;
-        for (int step = 0; step < distanceFastAxis; step++) {
-            error -= distanceSlowAxis;
+        int diffX = end.getX() - x;
+        int diffY = end.getY() - y;
+        PathCalculationParameters params = calculatePathParameters(diffX, diffY);
+
+        int error = params.distanceFastAxis / 2;
+        for (int i = 0; i < params.distanceFastAxis; i++) {
+            error -= params.distanceSlowAxis;
             if (error < 0) {
-                error += distanceFastAxis;
-                x += diagonalStepX;
-                y += diagonalStepY;
+                error += params.distanceFastAxis;
+                x += params.diagonalStepX;
+                y += params.diagonalStepY;
             } else {
-                x += parallelStepX;
-                y += parallelStepY;
+                x += params.parallelStepX;
+                y += params.parallelStepY;
             }
             path.add(new PositionVector(x, y));
         }
@@ -300,10 +206,111 @@ public void switchToNextActiveCar() {
     }
 
     /**
-     * Checks if the given space is a finish space.
+     * Checks if the current turn should be skipped due to game state.
      *
-     * @param space the space type to check
-     * @return true if the space is one of the finish spaces
+     * @param currentCar the current Car
+     * @return true if the turn is invalid (winner determined or car crashed), false otherwise
+     */
+    private boolean isTurnInvalid(Car currentCar) {
+        return winner != NO_WINNER || currentCar.isCrashed();
+    }
+
+    /**
+     * Processes the movement path of the current car.
+     * Iterates through each PositionVector in the path, checking for collisions and finish line crossings.
+     *
+     * @param currentCar the current Car
+     * @param path       the movement path as a List of PositionVectors
+     * @return true if the turn should be terminated early (due to a crash or win), false otherwise
+     */
+    private boolean processPath(Car currentCar, List<PositionVector> path) {
+        for (PositionVector pos : path) {
+            SpaceType space = track.getSpaceTypeAtPosition(pos);
+            if (isCollision(space, currentCar, pos)) {
+                return true;
+            }
+            if (isFinish(space) && processFinishCrossing(currentCar, space)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks for a collision at the given position. If a collision is detected, the car crashes and the winner is checked.
+     *
+     * @param space      the SpaceType at the position
+     * @param currentCar the current Car
+     * @param pos        the PositionVector to check
+     * @return true if a collision occurred, false otherwise
+     */
+    private boolean isCollision(SpaceType space, Car currentCar, PositionVector pos) {
+        if (space == SpaceType.WALL) {
+            currentCar.crash(pos);
+            checkForWinner();
+            return true;
+        }
+        if (space == SpaceType.TRACK && hasCollisionAt(pos, currentCarIndex)) {
+            currentCar.crash(pos);
+            checkForWinner();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Processes finish line crossing for the current car.
+     * Determines if the crossing is valid for winning, and updates crossing state accordingly.
+     *
+     * @param currentCar the current Car
+     * @param space      the finish SpaceType encountered
+     * @return true if the crossing resulted in a win, false otherwise
+     */
+    private boolean processFinishCrossing(Car currentCar, SpaceType space) {
+        if (isWinningFinish(space, currentCar.getVelocity())) {
+            if (!hasIncorrectCrossing[currentCarIndex]) {
+                currentCar.move();
+                winner = currentCarIndex;
+                return true;
+            } else {
+                consecutiveCorrectCrossings[currentCarIndex]++;
+                if (consecutiveCorrectCrossings[currentCarIndex] >= 2) {
+                    currentCar.move();
+                    winner = currentCarIndex;
+                    return true;
+                }
+            }
+        } else {
+            hasIncorrectCrossing[currentCarIndex] = true;
+            consecutiveCorrectCrossings[currentCarIndex] = 0;
+        }
+        return false;
+    }
+
+    /**
+     * Checks if only one active car remains and sets it as the winner.
+     */
+    private void checkForWinner() {
+        int activeCars = 0;
+        int lastActiveIndex = -1;
+        int carCount = track.getCarCount();
+        for (int i = 0; i < carCount; i++) {
+            Car car = track.getCar(i);
+            if (!car.isCrashed()) {
+                activeCars++;
+                lastActiveIndex = i;
+            }
+        }
+        if (activeCars == 1) {
+            winner = lastActiveIndex;
+        }
+    }
+
+    /**
+     * Determines if the given space is a finish space.
+     *
+     * @param space the SpaceType to check
+     * @return true if the space is one of the finish types, false otherwise
      */
     private boolean isFinish(SpaceType space) {
         return space == SpaceType.FINISH_LEFT ||
@@ -313,37 +320,41 @@ public void switchToNextActiveCar() {
     }
 
     /**
-     * Determines if the finish crossing is valid based on the finish space type and the car's velocity.
-     * For FINISH_LEFT, the car must be moving from right to left (negative X velocity).
-     * For FINISH_RIGHT, the car must be moving from left to right (positive X velocity).
-     * For FINISH_UP, the car must be moving from bottom to top (negative Y velocity).
-     * For FINISH_DOWN, the car must be moving from top to bottom (positive Y velocity).
+     * Determines if the finish crossing is valid for winning based on the finish space and car velocity.
      *
-     * @param space the finish space type
-     * @param velocity the car's velocity vector
-     * @return true if the finish crossing is valid for winning
+     * @param space    the finish SpaceType encountered
+     * @param velocity the car's velocity as a PositionVector
+     * @return true if the finish crossing is valid for winning, false otherwise
      */
     private boolean isWinningFinish(SpaceType space, PositionVector velocity) {
         PositionVector vSignum = velocity.signum();
         switch (space) {
-            case FINISH_LEFT:  return vSignum.getX() == -1;
-            case FINISH_RIGHT: return vSignum.getX() == 1;
-            case FINISH_UP:    return vSignum.getY() == -1;
-            case FINISH_DOWN:  return vSignum.getY() == 1;
-            default:           return false;
+            case FINISH_LEFT:
+                return vSignum.getX() == -1;
+            case FINISH_RIGHT:
+                return vSignum.getX() == 1;
+            case FINISH_UP:
+                return vSignum.getY() == -1;
+            case FINISH_DOWN:
+                return vSignum.getY() == 1;
+            default:
+                return false;
         }
     }
 
     /**
-     * Checks if there is a collision at the specified position with any active car (excluding the current car).
+     * Checks for collision with any active car (excluding the current car) at the specified position.
      *
-     * @param pos the position to check for collision
-     * @param currentCarIndex the index of the current car
-     * @return true if there is a collision
+     * @param pos              the PositionVector to check
+     * @param currentCarIndex  the index of the current car
+     * @return true if a collision is detected, false otherwise
      */
     private boolean hasCollisionAt(PositionVector pos, int currentCarIndex) {
-        for (int i = 0; i < track.getCarCount(); i++) {
-            if (i == currentCarIndex) continue;
+        int carCount = track.getCarCount();
+        for (int i = 0; i < carCount; i++) {
+            if (i == currentCarIndex) {
+                continue;
+            }
             Car otherCar = track.getCar(i);
             if (!otherCar.isCrashed() && otherCar.getPosition().equals(pos)) {
                 return true;
@@ -353,20 +364,44 @@ public void switchToNextActiveCar() {
     }
 
     /**
-     * Checks if only one car remains active and sets it as the winner if applicable.
+     * Calculates the step parameters needed for Bresenham's algorithm.
+     *
+     * @param diffX the difference in x-coordinates
+     * @param diffY the difference in y-coordinates
+     * @return a PathCalculationParameters object containing the computed parameters
      */
-    private void checkForWinner() {
-        int activeCars = 0;
-        int lastActiveIndex = -1;
-        for (int i = 0; i < track.getCarCount(); i++) {
-            Car car = track.getCar(i);
-            if (!car.isCrashed()) {
-                activeCars++;
-                lastActiveIndex = i;
-            }
+    private PathCalculationParameters calculatePathParameters(int diffX, int diffY) {
+        int distX = Math.abs(diffX);
+        int distY = Math.abs(diffY);
+        int dirX = Integer.signum(diffX);
+        int dirY = Integer.signum(diffY);
+        if (distX > distY) {
+            return new PathCalculationParameters(dirX, 0, dirX, dirY, distY, distX);
+        } else {
+            return new PathCalculationParameters(0, dirY, dirX, dirY, distX, distY);
         }
-        if (activeCars == 1) {
-            winner = lastActiveIndex;
+    }
+
+    /**
+     * Holds step parameters for path calculation using Bresenham's algorithm.
+     */
+    private static class PathCalculationParameters {
+        final int parallelStepX;
+        final int parallelStepY;
+        final int diagonalStepX;
+        final int diagonalStepY;
+        final int distanceSlowAxis;
+        final int distanceFastAxis;
+
+        PathCalculationParameters(int parallelStepX, int parallelStepY,
+                                  int diagonalStepX, int diagonalStepY,
+                                  int distanceSlowAxis, int distanceFastAxis) {
+            this.parallelStepX = parallelStepX;
+            this.parallelStepY = parallelStepY;
+            this.diagonalStepX = diagonalStepX;
+            this.diagonalStepY = diagonalStepY;
+            this.distanceSlowAxis = distanceSlowAxis;
+            this.distanceFastAxis = distanceFastAxis;
         }
     }
 }

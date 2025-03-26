@@ -4,39 +4,33 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Holds a position (vector to x,y-position of the car on the track grid)
- * or a velocity vector (velocity x,y-components of a car).<br/>
- * PositionVectors are immutable, which means they cannot be modified.<br/>
- * Vector operations like {@link #add(PositionVector)} and {@link #subtract(PositionVector)}
- * return a new PositionVector containing the result.
+ * Represents an immutable position or velocity vector on a track grid.
+ * All vector operations (e.g. add, subtract) return a new PositionVector instance.
  */
 public final class PositionVector {
-    /** Format to print the position vector. */
     private static final String POSITION_VECTOR_FORMAT = "(X:%d, Y:%d)";
-
-    /** Pattern to parse a position vector from string format. */
+    // Updated regex to support optional negative sign for both x and y values.
     private static final Pattern POSITION_VECTOR_PATTERN =
-        Pattern.compile("\\([Xx]:(?<x>\\d+)\\s*,\\s*[Yy]:(?<y>\\d+)\\)");
+        Pattern.compile("\\([Xx]:(?<x>-?\\d+)\\s*,\\s*[Yy]:(?<y>-?\\d+)\\)");
 
-    /** horizontal value (position / velocity). */
     private final int x;
-
-    /** vertical value (position / velocity). */
     private final int y;
 
     /**
-     * Base constructor, initializing the position using coordinates or a velocity vector.
-     * @param x horizontal value (position or velocity)
-     * @param y vertical value (position or velocity)
+     * Constructs a new PositionVector with the specified coordinates.
+     *
+     * @param x the horizontal value (position or velocity).
+     * @param y the vertical value (position or velocity).
      */
     public PositionVector(final int x, final int y) {
-        this.y = y;
         this.x = x;
+        this.y = y;
     }
 
     /**
-     * Copy constructor, copying the values from another PositionVector.
-     * @param other position vector to copy from
+     * Copy constructor to create a new PositionVector from an existing one.
+     *
+     * @param other the PositionVector to copy.
      */
     public PositionVector(final PositionVector other) {
         this.x = other.getX();
@@ -44,16 +38,18 @@ public final class PositionVector {
     }
 
     /**
-     * Get the horizontal value (position or velocity).
-     * @return the horizontal value (position or velocity)
+     * Returns the horizontal value (position or velocity).
+     *
+     * @return the horizontal component.
      */
     public int getX() {
         return this.x;
     }
 
     /**
-     * Get the vertical value (position or velocity).
-     * @return vertical value (position or velocity)
+     * Returns the vertical value (position or velocity).
+     *
+     * @return the vertical component.
      */
     public int getY() {
         return this.y;
@@ -61,90 +57,90 @@ public final class PositionVector {
 
     @Override
     public boolean equals(final Object other) {
-        if (!(other instanceof final PositionVector otherVector)) return false;
-        return this.y == otherVector.getY() && this.x == otherVector.getX();
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof PositionVector)) {
+            return false;
+        }
+        PositionVector otherVector = (PositionVector) other;
+        return this.x == otherVector.x && this.y == otherVector.y;
     }
 
     @Override
     public int hashCode() {
-        return this.x ^ this.y;
+        return 31 * x + y;
     }
 
     @Override
     public String toString() {
-        return  POSITION_VECTOR_FORMAT.formatted(this.x, this.y);
+        return POSITION_VECTOR_FORMAT.formatted(this.x, this.y);
     }
 
     /**
-     * Calculates the vector addition of the current vector with the given vector, e.g.
-     * <ul>
-     *   <li>if a velocity vector is added to a position, the next position is returned</li>
-     *   <li>if a direction vector is added to a velocity, the new velocity is returned</li>
-     * </ul>
-     * The vector values are not modified, but a new Vector containing the result is returned.
+     * Returns a new PositionVector representing the sum of this vector and the specified vector.
      *
-     * @param vector a position or velocity vector to add
-     * @return A new PositionVector holding the result of the addition.
+     * @param vector the vector to add.
+     * @return a new PositionVector containing the result of the addition.
      */
     public PositionVector add(final PositionVector vector) {
-        return new PositionVector(this.getX() + vector.getX(), this.getY() + vector.getY());
+        return new PositionVector(this.x + vector.getX(), this.y + vector.getY());
     }
 
     /**
-     * Calculates the vector difference of the current vector to the given vector,
-     * i.e., subtracts the given from the current vectors coordinates,
-     * e.g., car position and/or velocity vector <br>
-     * The vector values are not modified, but a new Vector containing the result is returned.
-     * @param vector A position or velocity vector to subtract
-     * @return A new PositionVector holding the result of the subtraction.
+     * Returns a new PositionVector representing the difference between this vector and the specified vector.
+     *
+     * @param vector the vector to subtract.
+     * @return a new PositionVector containing the result of the subtraction.
      */
     public PositionVector subtract(final PositionVector vector) {
-        return new PositionVector(this.getX() - vector.getX(), this.getY() - vector.getY());
+        return new PositionVector(this.x - vector.getX(), this.y - vector.getY());
     }
 
     /**
-     * Calculates the absolute coordinates (positive values) of a PositionVector.
+     * Returns a new PositionVector with the absolute values of this vector's components.
      *
-     * @return a new PositionVector containing the absolute values of the current vectors coordinates.
+     * @return a new PositionVector with absolute coordinate values.
      */
     public PositionVector abs() {
-        return new PositionVector(Math.abs(this.getX()), Math.abs(this.getY()));
+        return new PositionVector(Math.abs(this.x), Math.abs(this.y));
     }
 
     /**
-     * Calculates the coordinates signum of a PositionVector.<br>
-     * Returned values for each coordinate are -1, 0 or 1, which represent the direction the vector is pointing to:<br>
-     * x = -1 -> LEFT, x = 0 -> NONE, x = 1 -> RIGHT<br>
-     * y = -1 -> UP, y = 0 -> NONE, y = 1 -> DOWN
+     * Returns a new PositionVector representing the signum of this vector.
+     * Each coordinate is mapped to -1, 0, or 1 indicating its sign.
      *
-     * @return a new PositionVector containing the signum of the current vector.
+     * @return a new PositionVector containing the signum values of the coordinates.
      */
     public PositionVector signum() {
-        return new PositionVector(Integer.signum(this.getX()), Integer.signum(this.getY()));
+        return new PositionVector(Integer.signum(this.x), Integer.signum(this.y));
     }
 
     /**
-     * Calculates the scalar product (dot product) of the current vector with the given vector.
+     * Calculates the scalar (dot) product of this vector with the specified vector.
      *
-     * @param vector to calculate the scalar product with
-     * @return the scalar product of the two vectors
+     * @param vector the vector to calculate the scalar product with.
+     * @return the scalar product of the two vectors.
      */
     public int scalarProduct(final PositionVector vector) {
-        return this.getX() * vector.getX() + this.getY() * vector.getY();
+        return this.x * vector.getX() + this.y * vector.getY();
     }
 
     /**
-     * Parses a position vector from a string in the format (X:1, Y:2).
-     * This is the format produced by {@link #toString()}.
+     * Parses a PositionVector from a string in the format (X:1, Y:2).
+     * The string must match the expected pattern; otherwise, an IllegalArgumentException is thrown.
      *
-     * @param positionString string to parse
-     * @return parsed position vector
+     * @param positionString the string to parse.
+     * @return a PositionVector parsed from the string.
+     * @throws IllegalArgumentException if the string does not match the expected pattern.
      */
     public static PositionVector ofString(String positionString) {
         Matcher matcher = POSITION_VECTOR_PATTERN.matcher(positionString);
         if (!matcher.matches()) {
             throw new IllegalArgumentException("String does not match position vector pattern: " + positionString);
         }
-        return new PositionVector(Integer.parseInt(matcher.group("x")), Integer.parseInt(matcher.group("y")));
+        int x = Integer.parseInt(matcher.group("x"));
+        int y = Integer.parseInt(matcher.group("y"));
+        return new PositionVector(x, y);
     }
 }

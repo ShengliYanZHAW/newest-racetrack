@@ -3,14 +3,16 @@ package ch.zhaw.it.pm2.racetrack.strategy;
 import ch.zhaw.it.pm2.racetrack.Direction;
 
 /**
- * Do not accelerate in any direction.
- * This is the simplest strategy that just maintains the car's current velocity.
+ * A strategy that does not accelerate in any direction.
+ * This simple strategy always returns  Direction NONE,
+ * thus maintaining the car's current velocity.
  */
 public class DoNotMoveStrategy implements MoveStrategy {
+
     /**
-     * {@inheritDoc}
+     * Returns the next move, which is always Direction NONE.
      *
-     * @return always {@link Direction#NONE}
+     * @return Direction NONE
      */
     @Override
     public Direction nextMove() {

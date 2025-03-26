@@ -11,24 +11,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Implements a strategy that determines the next move based on a file containing
- * a list of directions. Each line in the file should contain a Direction enum value
- * (UP, DOWN, LEFT, RIGHT, etc.). When the list of moves in the file is exhausted,
- * the strategy returns Direction.NONE to maintain a constant velocity.
+ * Implements a strategy that determines the next move based on a file containing a list of directions.
+ * Each line in the file should contain a valid Direction enum value (e.g. UP, DOWN, LEFT, RIGHT, etc.).
+ * When the list of moves is exhausted, the strategy returns Direction NONE.
  */
 public class MoveListStrategy implements MoveStrategy {
-    /** List of moves read from the file. */
+
     private final List<Direction> moves;
-    
-    /** Index of the current move. */
     private int currentMoveIndex = 0;
 
     /**
-     * Constructor that reads directions from the specified file.
+     * Constructs a new MoveListStrategy by reading moves from the specified file.
      *
-     * @param moveFile the file containing the list of moves
+     * @param moveFile the file containing the list of moves; must not be null
      * @throws IllegalArgumentException if the moveFile is null
-     * @throws InvalidFileFormatException if there are formatting errors in the moves file
+     * @throws InvalidFileFormatException if the file contains invalid direction values or cannot be read
      */
     public MoveListStrategy(File moveFile) throws InvalidFileFormatException {
         if (moveFile == null) {
@@ -46,7 +43,6 @@ public class MoveListStrategy implements MoveStrategy {
      */
     private List<Direction> readMovesFromFile(File file) throws InvalidFileFormatException {
         List<Direction> movesList = new ArrayList<>();
-
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             int lineNumber = 0;
@@ -54,16 +50,7 @@ public class MoveListStrategy implements MoveStrategy {
                 lineNumber++;
                 line = line.trim();
                 if (!line.isEmpty()) {
-                    try {
-                        Direction direction = Direction.valueOf(line);
-                        movesList.add(direction);
-                    } catch (IllegalArgumentException e) {
-                        throw new InvalidFileFormatException(
-                            InvalidFileFormatException.FormatErrorType.INVALID_MOVE_FORMAT,
-                            "Invalid direction at line " + lineNumber + ": '" + line + "'. Must be one of " + 
-                            String.join(", ", getDirectionNames())
-                        );
-                    }
+                    movesList.add(parseMoveLine(line, lineNumber));
                 }
             }
         } catch (IOException e) {
@@ -73,14 +60,33 @@ public class MoveListStrategy implements MoveStrategy {
                 e
             );
         }
-
         return movesList;
     }
-    
+
     /**
-     * Helper method to get an array of all valid direction names.
-     * 
-     * @return array of direction enum constant names
+     * Parses a single line from the move file into a Direction.
+     *
+     * @param line the line to parse
+     * @param lineNumber the current line number (for error reporting)
+     * @return the parsed Direction
+     * @throws InvalidFileFormatException if the line does not represent a valid direction
+     */
+    private Direction parseMoveLine(String line, int lineNumber) throws InvalidFileFormatException {
+        try {
+            return Direction.valueOf(line);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidFileFormatException(
+                InvalidFileFormatException.FormatErrorType.INVALID_MOVE_FORMAT,
+                "Invalid direction at line " + lineNumber + ": '" + line + "'. Must be one of " +
+                    String.join(", ", getDirectionNames())
+            );
+        }
+    }
+
+    /**
+     * Returns an array of all valid direction names.
+     *
+     * @return an array of String representing all Direction enum constant names
      */
     private String[] getDirectionNames() {
         Direction[] values = Direction.values();
@@ -93,8 +99,9 @@ public class MoveListStrategy implements MoveStrategy {
 
     /**
      * Returns the next direction from the move file.
+     * If no more moves are available, returns Direction NONE.
      *
-     * @return next direction from move file or NONE if no more moves are available
+     * @return the next Direction or Direction NONE if moves are exhausted
      */
     @Override
     public Direction nextMove() {

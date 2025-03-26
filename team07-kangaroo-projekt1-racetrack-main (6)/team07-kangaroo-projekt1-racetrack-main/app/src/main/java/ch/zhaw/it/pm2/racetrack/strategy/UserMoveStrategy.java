@@ -9,16 +9,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Let the user decide the next move.
- * Uses Text-IO library to interact with the user and get their move choice.
+ * A strategy that lets the user decide the next move.
+ * Uses the Text-IO library to interact with the user and obtain their move choice.
  */
 public class UserMoveStrategy implements MoveStrategy {
+
     private final TextIO textIO;
     private final TextTerminal<?> terminal;
     private final Map<Integer, Direction> keypadMapping;
 
     /**
-     * Constructor that initializes the Text-IO components and the keypad mapping.
+     * Constructs a new UserMoveStrategy and initializes the Text-IO components and keypad mapping.
      */
     public UserMoveStrategy() {
         this.textIO = TextIoFactory.getTextIO();
@@ -28,8 +29,8 @@ public class UserMoveStrategy implements MoveStrategy {
 
     /**
      * Creates a mapping from numeric keypad values to Direction enum values.
-     * 
-     * @return a Map that maps integers 1-9 to Direction enum values
+     *
+     * @return a map mapping integers 1-9 to corresponding Direction values
      */
     private Map<Integer, Direction> createKeypadMapping() {
         Map<Integer, Direction> mapping = new HashMap<>();
@@ -56,19 +57,17 @@ public class UserMoveStrategy implements MoveStrategy {
     }
 
     /**
-     * Asks the user for the direction vector.
+     * Asks the user for the next move based on keypad input.
      *
-     * @return next direction based on the user's input, null if the user terminates the game
+     * @return the Direction corresponding to the user's choice; if the user terminates the input, null is returned
      */
     @Override
     public Direction nextMove() {
         displayKeypadHelp();
-        
         int keyChoice = textIO.newIntInputReader()
-                .withMinVal(1)
-                .withMaxVal(9)
-                .read("Enter acceleration (1-9)");
-                
+            .withMinVal(1)
+            .withMaxVal(9)
+            .read("Enter acceleration (1-9)");
         return keypadMapping.get(keyChoice);
     }
 }

@@ -3,75 +3,69 @@ package ch.zhaw.it.pm2.racetrack;
 import ch.zhaw.it.pm2.racetrack.given.CarSpecification;
 
 /**
- * Class representing a car on the racetrack.<br/>
- * Uses {@link PositionVector} to store current position on the track grid and current velocity vector.<br/>
- * Each car has an identifier character which represents the car on the racetrack board.<br/>
- * Also keeps the state, if the car is crashed (not active anymore).
- * The state cannot be changed back to uncrashed.<br/>
- * The velocity is changed by providing an acceleration vector.<br/>
- * The car is able to calculate the endpoint of its next position and on request moves to it.<br/>
+ * Represents a car on the racetrack.
+ * This class uses PositionVector to store the current position and velocity.
+ * Each car has an identifier used to represent it on the track.
+ * The crash state is maintained and cannot be reverted.
+ * Velocity is updated by applying an acceleration vector.
+ * The car can calculate the endpoint of its next move and move to it.
  */
 public class Car implements CarSpecification {
 
-    /** Car identifier used to represent the car on the track. */
+    private static final PositionVector INITIAL_VELOCITY = new PositionVector(0, 0);
+
     private final char id;
-
-    /** Current position of the car on the track. */
     private PositionVector position;
-
-    /** Current velocity (x,y) of the car. */
     private PositionVector velocity;
-
-    /** Crash state of the car; true if crashed. */
     private boolean crashed;
-
     private int moveCount = 0;
 
     /**
-     * Constructor for class Car.
-     * @param id unique Car identification
-     * @param startPosition initial position of the Car
+     * Constructs a new Car with the given identifier and starting position.
+     * @param id unique car identifier
+     * @param startPosition initial position of the car; must not be null
+     * @throws IllegalArgumentException if startPosition is null
      */
     public Car(char id, PositionVector startPosition) {
+        if (startPosition == null) {
+            throw new IllegalArgumentException("startPosition must not be null");
+        }
         this.id = id;
         this.position = startPosition;
-        velocity = new PositionVector(0, 0);
-        crashed = false;
+        this.velocity = INITIAL_VELOCITY;
+        this.crashed = false;
     }
 
     /**
-     * Returns Identifier of the car, which represents the car on the track.
-     *
+     * Returns the car identifier.
      * @return the identifier character
      */
     @Override
     public char getId() {
-        return this.id;
+        return id;
     }
 
     /**
-     * Returns the current immutable position of the car on the track as a {@link PositionVector}.
-     * @return the car's current position
+     * Returns the current position of the car.
+     * @return the current position
      */
     @Override
     public PositionVector getPosition() {
-        return this.position;
+        return position;
     }
 
     /**
-     * Returns the current immutable velocity vector of the car as a {@link PositionVector}.
-     * @return the car's current velocity vector
+     * Returns the current velocity of the car.
+     * @return the current velocity vector
      */
     @Override
     public PositionVector getVelocity() {
-        return this.velocity;
+        return velocity;
     }
 
     /**
-     * Return the position that will apply after the next move at the current velocity.
-     * Does not complete the move, so the current position remains unchanged.
-     *
-     * @return expected position after the next move
+     * Calculates the expected position after the next move without updating the current position.
+     * @return the expected position after the next move
      */
     @Override
     public PositionVector nextPosition() {
@@ -79,31 +73,30 @@ public class Car implements CarSpecification {
     }
 
     /**
-     * Add the specified amounts to this car's velocity.<br/>
-     * The only acceleration values allowed are -1, 0 or 1 in both axis<br/>
-     * There are 9 possible acceleration vectors, which are defined in {@link Direction}.<br/>
-     * Changes only velocity, not position.<br/>
-     *
-     * @param acceleration a Direction vector containing the amounts to add to the velocity in x and y dimension
+     * Adds the given acceleration vector to the car's velocity.
+     * Only acceleration values of -1, 0, or 1 per axis are allowed.
+     * @param acceleration a Direction representing the acceleration vector; must not be null
+     * @throws IllegalArgumentException if acceleration is null
      */
     @Override
     public void accelerate(Direction acceleration) {
-        this.velocity = this.velocity.add(acceleration.getVector());
+        if (acceleration == null) {
+            throw new IllegalArgumentException("acceleration must not be null");
+        }
+        this.velocity = velocity.add(acceleration.getVector());
     }
 
     /**
-     * Update this Car's position based on its current velocity.
-     * And increment the move count.
+     * Updates the car's position based on its current velocity and increments the move count.
      */
     @Override
     public void move() {
-        this.position = this.position.add(this.velocity);
+        position = position.add(velocity);
         moveCount++;
     }
 
     /**
      * Returns the total number of moves executed by this car.
-     *
      * @return the move count
      */
     public int getMoveCount() {
@@ -111,23 +104,25 @@ public class Car implements CarSpecification {
     }
 
     /**
-     * Mark this Car as being crashed at the given position.
-     *
-     * @param crashPosition position the car crashed.
+     * Marks the car as crashed at the given position.
+     * @param crashPosition the position where the car crashed; must not be null
+     * @throws IllegalArgumentException if crashPosition is null
      */
     @Override
     public void crash(PositionVector crashPosition) {
-        this.position = crashPosition;
-        this.crashed = true;
+        if (crashPosition == null) {
+            throw new IllegalArgumentException("crashPosition must not be null");
+        }
+        position = crashPosition;
+        crashed = true;
     }
 
     /**
-     * Returns whether this Car has been marked as crashed.
-     *
-     * @return true if crash() has been called on this Car, false otherwise.
+     * Indicates whether the car has crashed.
+     * @return true if the car has crashed, false otherwise
      */
     @Override
     public boolean isCrashed() {
-        return this.crashed;
+        return crashed;
     }
 }
